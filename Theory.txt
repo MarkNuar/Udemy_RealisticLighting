@@ -1,0 +1,130 @@
+3 points light:
+    Key 
+    Fill 
+    Rim 
+    Background
+
+These settings works for all kind of lights! 
+
+Realtime Global Illumination: 
+    Limitations: 
+        Reserved for non moving geometry (static)
+        Lighting data needs to be pre-computed (also when static objects are moved)
+        Limited shadow quality -> they are very hard! 
+
+        Shadows quality can be defined by the Indirect Resolution (to preview it, go to Albedo display mode in scene view)
+            0.2-0.5 for open enviroments 
+            0.5-1 for outdoors 
+            1-3 for indoors 
+    
+    You can use more lights 
+
+If you want to use baked illumination, check 
+    In models, check "Generate Lightmap UVs"!
+
+Baked Global Illumination: (for better shadows) 
+    Each light has a mode: 
+        Realitime 
+        Mixed 
+        Baked
+    Set to baked to work with baked global illumination 
+
+    To have higher res shadows, increase the LightMap Resolution (values higher than indirect Resolution)
+        To preview the resolution, use the Albedo Display mode 
+
+    To soften the edges of backed shadows, use Baked Shadows Angle, in the light's inspector
+        This slider only happears with light mode set to baked (or mixed) 
+        Values of 3 are soft enough
+
+Progressive Lightmapper: 
+    Outdoor scenes: <= 100 samples 
+    Indoor scenes: > 100 samples to avoid noise 
+
+
+Image Based Lighting: 
+    Skybox with a panorama photo
+    
+Ambient Occlusion: 
+    Darkens the occluded areas
+    It is based on objects geometry 
+    Max Distance: radius of spheres casted at each point to deermine if the point (vertex) is occluded 
+    Indirect Contribution: ao contrast 
+    Direct Contribution: ao contrast on area lighted by light sources 
+
+Area Light:
+    Light from a plane 
+    Indirect Light enables for light reflection 
+    Lights in one direction 
+
+Glowing Material: 
+    Enable emission on a Material to make it glow 
+
+
+Put an object into layer X, and the Light with culling mask containing X brigthens it 
+Use this technique when you have moving objects, which are not static, so they can be englithed by baked lights
+
+Lighting modes: 
+    Realitime
+    Backed 
+    Mixed 
+        See the PDF 
+
+    
+Lighting Pipelines steps: 
+    culling
+    rendering 
+    postprocessing 
+
+Rendering Pipelines:
+    Build In 
+    Scriptable Render Pipeline 
+        Lighwieght render Pipeline
+        High Definition Pipeline 
+        Custom Pipeline 
+
+
+Occlusion Culling: 
+    Mark for each object that you want to be used for occlusion: 
+        Occluder Static if they will block
+        Occludee Static if they can be blocked 
+
+Rendering Path: 
+
+    Unity can render lights in three different modes: 
+        Pixel (most expensive) (only them cast shadows)
+        Vertex 
+        Harmonic (cheapest)
+            For each light in the scene, it decides which technique to use for each light according to the position and importance of the light (the importance can be set for each light individually)
+            In the quality settings you can set the maximum number of pixel lights ]
+            Directional Light gets the highest priority when casting shadows 
+
+    Forward Rendering: 
+        Every light in the scene is computed separately for each object 
+        For each object, we perform separately:  
+            Vertex shader 
+            Fragment shader (this is the most heavy)
+        Each fragment is executed for each light -> N objects, M lights -> N*M draw call operations 
+    Deferred Rendering:
+        In deferred rendering we do not perform the fragment shader for each object individually, but for all the objects seen by the camera together, in a single shot 
+        We merge all the objects into 3 buffers: 
+            Color G-Buffer
+            Normal G-Buffer  
+            Z-Buffer (depth)
+        After the 3 buffers are created, we can compute the lights (M) for a "single" object instead of N objects! Complexity reduces to only M!
+
+    Rule of Thumb: 
+        If you have one single directional light: Forward rendering better 
+        If you have a lot of lights, hitting different objects: Deferred rendering better 
+    
+    Use Forward when:
+        - few real time lights 
+        - reduced light range 
+        - use backed lightmaps of light probes when possible 
+        - Need to use multisample antialiasing 
+        - Renders transparent objects 
+
+    Use Deferred when: 
+        - multiple real time lights 
+        - use G and Z buffer for fragment operations 
+        - antialiasing only from post processing (fast, but low quality)
+        - requires a forward rendering pass to render trasnparent objects 
